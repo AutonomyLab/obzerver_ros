@@ -1,0 +1,7 @@
+<launch>
+  <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="screen">
+    <param name="enable_debug_image" value="true" />
+    <param name="obz_logfile" value="/tmp/mani" />
+    <remap from="image" to="ardrone/image_raw" />
+  </node>
+</launch>

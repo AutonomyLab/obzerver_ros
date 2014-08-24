@@ -12,12 +12,15 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   sensor_msgs
   cv_bridge
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-find_package(OpenCV REQUIRED)
+#find_package(OpenCV REQUIRED)
+# TODO: Use params same as obzerver
+find_package(OpenCV REQUIRED PATHS /home/autolab/Dev/opencv-2.4.9/build NO_DEFAULT_PATH)
 
 include(ExternalProject)
 ExternalProject_Add(libobzerver
@@ -65,11 +68,10 @@ message(STATUS "mani: ${CMAKE_BINARY_DIR}/libobzerver/src/obzerver/include")
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+ FILES
+ object.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -86,10 +88,11 @@ message(STATUS "mani: ${CMAKE_BINARY_DIR}/libobzerver/src/obzerver/include")
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  sensor_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -103,7 +106,7 @@ message(STATUS "mani: ${CMAKE_BINARY_DIR}/libobzerver/src/obzerver/include")
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES obzerver_ros
-#  CATKIN_DEPENDS glog gsl opencv2 roscpp
+  CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 
