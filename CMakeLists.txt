@@ -140,7 +140,7 @@ add_executable(obzerver_node src/obzerver_node.cpp)
 # add_dependencies(obzerver_ros_node obzerver_ros_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-add_dependencies(obzerver_node obzerver_ros_generate_messages_cpp libobzerver)
+add_dependencies(obzerver_node ${PROJECT_NAME}_generate_messages_cpp libobzerver)
 target_link_libraries(obzerver_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
