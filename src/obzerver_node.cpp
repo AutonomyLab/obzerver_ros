@@ -15,6 +15,7 @@
 #include "obzerver/object_tracker.hpp"
 
 #include "obzerver_ros/object.h"
+
 class ObzerverROS {
 public:
   template<class T>
@@ -243,27 +244,27 @@ public:
     ticker(StepBenchmarker::GetInstance())
   {
     update_params();
-    sub_image = ros_it.subscribe("obzerver_ros/image", queue_size, &ObzerverROS::ImageCallback, this);
-    pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver_ros/object", 20);
+    sub_image = ros_it.subscribe("obzerver/image", queue_size, &ObzerverROS::ImageCallback, this);
+    pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver/object", 20);
 
     if (enable_debug_image) {
       ROS_INFO("debug_image is enabled.");
-      pub_debug_image = ros_it.advertise("debug_image", 1);
+      pub_debug_image = ros_it.advertise("obzerver/debug_image", 1);
     }
 
     if (enable_diff_image) {
       ROS_INFO("diff_image is enabled.");
-      pub_diff_image = ros_it.advertise("diff_image", 1);
+      pub_diff_image = ros_it.advertise("obzerver/diff_image", 1);
     }
 
     if (enable_stablized_image) {
       ROS_INFO("stablized_image is enabled.");
-      pub_stablized_image = ros_it.advertise("stablized_image", 1);
+      pub_stablized_image = ros_it.advertise("obzerver/stablized_image", 1);
     }
 
     if (enable_simmat_image) {
       ROS_INFO("simmat_image is enabled.");
-      pub_simmat_image = ros_it.advertise("simmat_image", 1);
+      pub_simmat_image = ros_it.advertise("obzerver/simmat_image", 1);
     }
 
     obz_log_config("obzerver_ros_node", param_log_file);

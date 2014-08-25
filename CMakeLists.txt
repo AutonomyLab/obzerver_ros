@@ -31,7 +31,7 @@ ExternalProject_Add(libobzerver
     -DWITH_TESTS=0
     -DUSE_CUSTOM_OPENCV=1
     -DOpenCV_DIR=/home/autolab/Dev/opencv-2.4.9/build
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # TODO: Is it required or inherited?
     -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
   BUILD_COMMAND make
 #  BUILD_IN_SOURCE 1
