@@ -24,8 +24,9 @@ public:
     ROS_INFO_STREAM("Param " << param_name << " : " << var);
   }
 
-private:
-  ros::NodeHandle ros_nh;
+protected:
+//  ros::NodeHandle ros_nh;
+//  ros::NodeHandle ros_private_nh;
   image_transport::ImageTransport ros_it;
   image_transport::Subscriber sub_image;
 
@@ -56,7 +57,9 @@ private:
 
   cv::Mat frame_input;
   cv::Mat frame_gray;
-
+  int last_seq;
+  sensor_msgs::ImageConstPtr cache_msg;
+  cv_bridge::CvImageConstPtr frame_input_cvptr;
   cv_bridge::CvImage frame_debug_cvi;
   cv_bridge::CvImage frame_sim_cvi;
   cv_bridge::CvImage frame_stab_cvi;
@@ -92,18 +95,23 @@ private:
     get_param<int>("~skip_dc_term_count", param_skip_dc_term_count, 1);
   }
 
-  void ImageCallback(const sensor_msgs::ImageConstPtr& msg) {
+  void Process()
+  {
     ticker.reset();
+
+    // Do nothing when there is no new frame
+    if (!cache_msg || last_seq == cache_msg->header.seq) return;
+    last_seq = cache_msg->header.seq;
+
     float _f = -1.0;
-    cv_bridge::CvImageConstPtr frame_input_cvptr;
     try {
-      if (sensor_msgs::image_encodings::isColor(msg->encoding)) {
+      if (sensor_msgs::image_encodings::isColor(cache_msg->encoding)) {
         ROS_WARN_ONCE("Input image is BGR8");
-        frame_input_cvptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8);
+        frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::BGR8);
         do_convert = true;
       } else {
         ROS_WARN_ONCE("Input image is MONO8");
-        frame_input_cvptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8);
+        frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::MONO8);
         do_convert = false;
       }
 
@@ -233,13 +241,17 @@ private:
     } catch (const cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());
     }
+  }
 
-    ;
+  void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
+  {
+    cache_msg = msg;
   }
 
 public:
-  ObzerverROS(const int queue_size):
+  ObzerverROS(const int queue_size, ros::NodeHandle& ros_nh):
     ros_it(ros_nh),
+    last_seq(-1),
     frame_counter(0),
     ticker(StepBenchmarker::GetInstance())
   {
@@ -276,6 +288,26 @@ public:
     do_downsample = param_downsample_factor < 1.0 && param_downsample_factor > 0.0;
   }
 
+  virtual void spin()
+  {
+    // TODO: Check if fixed freq. is better
+    ROS_INFO("Setting ROS Loop Rate to %f hz", param_fps);
+    ros::Rate rate(param_fps);
+    while (ros::ok())
+    {
+      spinOnce();
+      if (!rate.sleep()) {
+        ROS_WARN("Can not catch up with input image rate.");
+      }
+    }
+  }
+
+  virtual void spinOnce ()
+  {
+    Process();
+    ros::spinOnce();
+  }
+
 };
 
 int main(int argc, char* argv[]) {
@@ -285,10 +317,10 @@ int main(int argc, char* argv[]) {
   ros::NodeHandle ros_nh;
   int param_queue_size;
   ObzerverROS::get_param<int>("~queue_size", param_queue_size, 1);
-  ObzerverROS obzerver_ros(param_queue_size);
+  ObzerverROS obzerver_ros(param_queue_size, ros_nh);
 
   /* Main Loop */
   ROS_INFO("Starting obzerver_ros");
-  ros::spin();
+  obzerver_ros.spin();
   return 0;
 }

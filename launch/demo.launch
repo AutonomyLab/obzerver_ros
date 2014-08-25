@@ -5,8 +5,8 @@
     <param name="enable_simmat_image" value="true" />
     <param name="enable_stablized_image" value="true" />
 
-    <param name="obz_logfile" value="/tmp/mani" />
-    <param name="downsample_factor" value="0.5" />
+    <param name="obz_logfile" value="" />
+    <param name="downsample_factor" value="1.0" />
     <param name="queue_size" value="1" />
 
     <remap from="obzerver/image" to="ardrone/image_raw" />
