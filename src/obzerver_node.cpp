@@ -36,6 +36,7 @@ protected:
   image_transport::Publisher pub_simmat_image;
   ros::Publisher pub_object;
 
+  std::string param_image_topic;
   std::string param_log_file;
 
   float param_downsample_factor;
@@ -82,6 +83,7 @@ protected:
     get_param<bool>("~enable_diff_image", enable_diff_image, false);
     get_param<bool>("~enable_simmat_image", enable_simmat_image, false);
 
+    get_param<std::string>("~image_topic", param_image_topic, std::string("camera/image_raw"));
     get_param<std::string>("~obz_logfile", param_log_file, std::string(""));
     get_param<float>("~downsample_factor", param_downsample_factor, 1.0);
     get_param<float>("~fps", param_fps, 30.0);
@@ -256,7 +258,12 @@ public:
     ticker(StepBenchmarker::GetInstance())
   {
     update_params();
-    sub_image = ros_it.subscribe("obzerver/image", queue_size, &ObzerverROS::ImageCallback, this);
+
+    sub_image = ros_it.subscribe(
+          param_image_topic,
+          queue_size,
+          &ObzerverROS::ImageCallback,
+          this);
     pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver/object", 20);
 
     if (enable_debug_image) {

@@ -9,6 +9,7 @@
     <param name="downsample_factor" value="1.0" />
     <param name="queue_size" value="1" />
 
-    <remap from="obzerver/image" to="ardrone/image_raw" />
+    <param name="image_topic" value="camera/image_raw" />
+    <param name="image_transport" value="compressed" />
   </node>
 </launch>
