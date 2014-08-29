@@ -21,7 +21,7 @@ public:
   template<class T>
   static void get_param(const std::string& param_name, T& var, const T default_value) {
     ros::param::param(param_name, var, default_value);
-    ROS_INFO_STREAM("Param " << param_name << " : " << var);
+    ROS_INFO_STREAM("[OBR] Param " << param_name << " : " << var);
   }
 
 protected:
@@ -58,7 +58,7 @@ protected:
 
   cv::Mat frame_input;
   cv::Mat frame_gray;
-  int last_seq;
+  unsigned int last_seq;
   sensor_msgs::ImageConstPtr cache_msg;
   cv_bridge::CvImageConstPtr frame_input_cvptr;
   cv_bridge::CvImage frame_debug_cvi;
@@ -108,11 +108,11 @@ protected:
     float _f = -1.0;
     try {
       if (sensor_msgs::image_encodings::isColor(cache_msg->encoding)) {
-        ROS_WARN_ONCE("Input image is BGR8");
+        ROS_WARN_ONCE("[OBR] Input image is BGR8");
         frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::BGR8);
         do_convert = true;
       } else {
-        ROS_WARN_ONCE("Input image is MONO8");
+        ROS_WARN_ONCE("[OBR] Input image is MONO8");
         frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::MONO8);
         do_convert = false;
       }
@@ -159,8 +159,11 @@ protected:
           out_object.roi.y_offset = object_tracker->GetObjectBoundingBox().tl().y;
           out_object.roi.width = object_tracker->GetObjectBoundingBox().width;
           out_object.roi.height = object_tracker->GetObjectBoundingBox().height;
+          out_object.max_width = frame_input.cols;
+          out_object.max_height = frame_input.rows;
           out_object.spectrum = object_tracker->GetObject().GetPeriodicity().GetSpectrum();
           out_object.dominant_freq = _f;
+          out_object.displacement = 0.0; // TODO
         }
 
         // Publish
@@ -241,7 +244,7 @@ protected:
         LOG(INFO) << ticker.getstr();
       }
     } catch (const cv_bridge::Exception& e) {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      ROS_ERROR("[OBR] cv_bridge exception: %s", e.what());
     }
   }
 
@@ -267,22 +270,22 @@ public:
     pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver/object", 20);
 
     if (enable_debug_image) {
-      ROS_INFO("debug_image is enabled.");
+      ROS_INFO("[OBR] debug_image is enabled.");
       pub_debug_image = ros_it.advertise("obzerver/debug_image", 1);
     }
 
     if (enable_diff_image) {
-      ROS_INFO("diff_image is enabled.");
+      ROS_INFO("[OBR] diff_image is enabled.");
       pub_diff_image = ros_it.advertise("obzerver/diff_image", 1);
     }
 
     if (enable_stablized_image) {
-      ROS_INFO("stablized_image is enabled.");
+      ROS_INFO("[OBR] stablized_image is enabled.");
       pub_stablized_image = ros_it.advertise("obzerver/stablized_image", 1);
     }
 
     if (enable_simmat_image) {
-      ROS_INFO("simmat_image is enabled.");
+      ROS_INFO("[OBR] simmat_image is enabled.");
       pub_simmat_image = ros_it.advertise("obzerver/simmat_image", 1);
     }
 
@@ -298,13 +301,13 @@ public:
   virtual void spin()
   {
     // TODO: Check if fixed freq. is better
-    ROS_INFO("Setting ROS Loop Rate to %f hz", param_fps);
+    ROS_INFO("[OBR] Setting ROS Loop Rate to %f hz", param_fps);
     ros::Rate rate(param_fps);
     while (ros::ok())
     {
       spinOnce();
       if (!rate.sleep()) {
-        ROS_WARN("Can not catch up with input image rate.");
+        ROS_WARN("[OBR] Can not catch up with input image rate.");
       }
     }
   }
@@ -327,7 +330,7 @@ int main(int argc, char* argv[]) {
   ObzerverROS obzerver_ros(param_queue_size, ros_nh);
 
   /* Main Loop */
-  ROS_INFO("Starting obzerver_ros");
+  ROS_INFO("[OBR] Starting obzerver_ros");
   obzerver_ros.spin();
   return 0;
 }
