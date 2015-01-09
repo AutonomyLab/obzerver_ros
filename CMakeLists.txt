@@ -20,7 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 #find_package(OpenCV REQUIRED)
 # TODO: Use params same as obzerver
-find_package(OpenCV REQUIRED PATHS /home/autolab/Dev/opencv-2.4.9/build NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED PATHS /home/autolab/Dev/opencv/opencv-2.4.10.1/build NO_DEFAULT_PATH)
 
 include(ExternalProject)
 ExternalProject_Add(libobzerver
@@ -30,7 +30,7 @@ ExternalProject_Add(libobzerver
   CMAKE_ARGS
     -DWITH_TESTS=0
     -DUSE_CUSTOM_OPENCV=1
-    -DOpenCV_DIR=/home/autolab/Dev/opencv-2.4.9/build
+    -DOpenCV_DIR=/home/autolab/Dev/opencv/opencv-2.4.10.1/build
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # TODO: Is it required or inherited?
     -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
   BUILD_COMMAND make

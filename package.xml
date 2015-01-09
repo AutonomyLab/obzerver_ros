@@ -34,26 +34,24 @@
   <buildtool_depend>catkin</buildtool_depend>
  
   <!-- obzerver -->
-  <build_depend>obzerver</build_depend> 
-  <build_depend>glog</build_depend>
-  <build_depend>gsl</build_depend>
-  <build_depend>opencv2</build_depend>
+  <!--build_depend>obzerver</build_depend-->
+  <build_depend>libgoogle-glog-dev</build_depend>
+  <build_depend>libgsl</build_depend>
+  <build_depend>libopencv-dev</build_depend>
 
   <run_depend>catkin</run_depend>
-  <run_depend>glog</run_depend>
-  <run_depend>opencv2</run_depend>
+  <run_depend>libgoogle-glog-dev</run_depend>
+  <run_depend>libopencv-dev</run_depend>
 
   <test_depend>gtest</test_depend>
 
   <!-- ros -->
-  <build_depend>vison_opencv</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>cv_bridge</build_depend>
   <build_depend>image_transport</build_depend>
   <build_depend>message_generation</build_depend>
 
-  <run_depend>vison_opencv</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>cv_bridge</run_depend>
