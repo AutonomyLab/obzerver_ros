@@ -26,7 +26,7 @@ include(ExternalProject)
 ExternalProject_Add(libobzerver
   GIT_REPOSITORY /home/autolab/Dev/obzerver
   GIT_TAG master
-  PREFIX ${CMAKE_BINARY_DIR}/libobzerver
+  PREFIX ${CATKIN_DEVEL_PREFIX}
   CMAKE_ARGS
     -DWITH_TESTS=0
     -DUSE_CUSTOM_OPENCV=1
@@ -34,10 +34,10 @@ ExternalProject_Add(libobzerver
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # TODO: Is it required or inherited?
     -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
   BUILD_COMMAND make
+  INSTALL_COMMAND make install
 #  BUILD_IN_SOURCE 1
 )
 
-message(STATUS "mani: ${CMAKE_BINARY_DIR}/libobzerver/src/obzerver/include")
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -120,13 +120,13 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${CMAKE_BINARY_DIR}/libobzerver/src/libobzerver/include
-  ${CMAKE_BINARY_DIR}/libobzerver/src/libobzerver/3rdparty/smctc/include
+  ${CATKIN_DEVEL_PREFIX}/include
 )
 
 link_directories(
-  ${CMAKE_BINARY_DIR}/libobzerver/src/libobzerver-build
+  ${CATKIN_DEVEL_PREFIX}/lib
 )
+
 ## Declare a cpp library
 # add_library(obzerver_ros
 #   src/${PROJECT_NAME}/obzerver_ros.cpp
