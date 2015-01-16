@@ -1,3 +1,23 @@
+/*
+ * (C) Copyright 2014 Autonomy Lab (Simon Fraser University).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributors:
+ *     Mani Monajjemi <mmonajje@sfu.ca>
+ */
+#include <string>
+
 #include "ros/ros.h"
 #include "image_transport/image_transport.h"
 #include "cv_bridge/cv_bridge.h"
@@ -16,10 +36,12 @@
 
 #include "obzerver_ros/object.h"
 
-class ObzerverROS {
+class ObzerverROS
+{
 public:
   template<class T>
-  static void get_param(const std::string& param_name, T& var, const T default_value) {
+  static void get_param(const std::string& param_name, T& var, const T default_value)
+  {
     ros::param::param(param_name, var, default_value);
     ROS_INFO_STREAM("[OBR] Param " << param_name << " : " << var);
   }
@@ -106,26 +128,33 @@ protected:
     last_seq = cache_msg->header.seq;
 
     float _f = -1.0;
-    try {
-      if (sensor_msgs::image_encodings::isColor(cache_msg->encoding)) {
+    try
+    {
+      if (sensor_msgs::image_encodings::isColor(cache_msg->encoding))
+      {
         ROS_WARN_ONCE("[OBR] Input image is BGR8");
         frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::BGR8);
         do_convert = true;
-      } else {
+      }
+      else
+      {
         ROS_WARN_ONCE("[OBR] Input image is MONO8");
         frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::MONO8);
         do_convert = false;
       }
 
-      frame_input = frame_input_cvptr->image; // No Copy For Now
+      frame_input = frame_input_cvptr->image;  // No Copy For Now
       ticker.tick("Frame Copy");
-      if (do_downsample) {
-        cv::resize(frame_input, frame_input, cv::Size(0, 0), param_downsample_factor, param_downsample_factor, cv::INTER_CUBIC);
+      if (do_downsample)
+      {
+        cv::resize(frame_input, frame_input, cv::Size(0, 0),
+                   param_downsample_factor, param_downsample_factor, cv::INTER_CUBIC);
         ticker.tick("Downsampling.");
       }
 
-      frame_gray = frame_input; // No Copy for now
-      if (do_convert) {
+      frame_gray = frame_input;  // No Copy for now
+      if (do_convert)
+      {
         cv::cvtColor(frame_input, frame_gray, cv::COLOR_BGR2GRAY);
         ticker.tick("Frame 2 Gray");
       }
@@ -137,10 +166,13 @@ protected:
       out_object.header.stamp = ros::Time::now();
       out_object.header.frame_id = frame_input_cvptr->header.frame_id;
       out_object.status = 0;
-      if (!ct_success) {
+      if (!ct_success)
+      {
         LOG(WARNING) << "Camera Tracker Failed";
-        // TODO
-      } else {
+        // TODO(mani-monaj)
+      }
+      else
+      {
         object_tracker->Update(camera_tracker->GetStablizedGray(),
                                camera_tracker->GetLatestDiff(),
                                camera_tracker->GetLatestSOF(),
@@ -149,8 +181,10 @@ protected:
         out_object.status = object_tracker->GetStatus();
 
         LOG(INFO) << "Tracking status: " << object_tracker->GetStatus();
-        if (object_tracker->IsTracking()) {
-          _f = object_tracker->GetObject().GetPeriodicity().GetDominantFrequency(param_skip_dc_term_count); // TODO
+        if (object_tracker->IsTracking())
+        {
+           // TODO(mani-monaj)
+          _f = object_tracker->GetObject().GetPeriodicity().GetDominantFrequency(param_skip_dc_term_count);
           LOG(INFO) << "Object: "
                     << object_tracker->GetObjectBoundingBox()
                     << " Periodicity:"
@@ -163,20 +197,21 @@ protected:
           out_object.max_height = frame_input.rows;
           out_object.spectrum = object_tracker->GetObject().GetPeriodicity().GetSpectrum();
           out_object.dominant_freq = _f;
-          out_object.displacement = 0.0; // TODO
+          out_object.displacement = 0.0;  // TODO(mani-monaj)
         }
 
         // Publish
 
-        if (pub_object.getNumSubscribers() > 0) {
+        if (pub_object.getNumSubscribers() > 0)
+        {
           pub_object.publish(out_object);
         }
 
         if (
-            enable_stablized_image &&
-            pub_stablized_image.getNumSubscribers() > 0 &&
-            camera_tracker->GetStablizedGray().data
-            )
+          enable_stablized_image &&
+          pub_stablized_image.getNumSubscribers() > 0 &&
+          camera_tracker->GetStablizedGray().data
+        )
         {
           frame_stab_cvi.image = camera_tracker->GetStablizedGray();
           frame_stab_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
@@ -187,10 +222,10 @@ protected:
         }
 
         if (
-            enable_debug_image &&
-            pub_debug_image.getNumSubscribers() > 0 &&
-            frame_input.data
-            )
+          enable_debug_image &&
+          pub_debug_image.getNumSubscribers() > 0 &&
+          frame_input.data
+        )
         {
           frame_debug_cvi.image = frame_input;
           frame_debug_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
@@ -202,22 +237,23 @@ protected:
                                       camera_tracker->GetTrackedFeaturesPrev(),
                                       camera_tracker->GetTrackedFeaturesCurr(),
                                       2,
-                                      cv::Scalar(127,127,127),
+                                      cv::Scalar(127, 127, 127),
                                       cv::Scalar(0, 0, 255),
                                       cv::Scalar(0, 0, 255));
 
           std::stringstream ss;
           ss << std::setprecision(5) << "Periodicity: " << _f;
-          cv::putText(frame_debug_cvi.image, ss.str(), cv::Point(40,40), 1, CV_FONT_HERSHEY_PLAIN, cv::Scalar(0, 0, 255));
+          cv::putText(frame_debug_cvi.image, ss.str(), cv::Point(40, 40), 1,
+                      CV_FONT_HERSHEY_PLAIN, cv::Scalar(0, 0, 255));
 
           pub_debug_image.publish(frame_debug_cvi.toImageMsg());
         }
 
         if (
-            enable_diff_image &&
-            pub_diff_image.getNumSubscribers() > 0 &&
-            camera_tracker->GetLatestDiff().data
-            )
+          enable_diff_image &&
+          pub_diff_image.getNumSubscribers() > 0 &&
+          camera_tracker->GetLatestDiff().data
+        )
         {
           frame_diff_cvi.image = camera_tracker->GetLatestDiff();
           frame_diff_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
@@ -227,10 +263,10 @@ protected:
         }
 
         if (
-            enable_simmat_image &&
-            pub_simmat_image.getNumSubscribers() > 0 &&
-            object_tracker->IsTracking()
-            )
+          enable_simmat_image &&
+          pub_simmat_image.getNumSubscribers() > 0 &&
+          object_tracker->IsTracking()
+        )
         {
           frame_sim_cvi.image = object_tracker->GetObject().GetSelfSimilarity().GetSimMatrixRendered();
           frame_sim_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
@@ -243,7 +279,9 @@ protected:
         frame_counter++;
         LOG(INFO) << ticker.getstr();
       }
-    } catch (const cv_bridge::Exception& e) {
+    }
+    catch (const cv_bridge::Exception& e)
+    {
       ROS_ERROR("[OBR] cv_bridge exception: %s", e.what());
     }
   }
@@ -263,28 +301,32 @@ public:
     update_params();
 
     sub_image = ros_it.subscribe(
-          param_image_topic,
-          queue_size,
-          &ObzerverROS::ImageCallback,
-          this);
+                  param_image_topic,
+                  queue_size,
+                  &ObzerverROS::ImageCallback,
+                  this);
     pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver/object", 20);
 
-    if (enable_debug_image) {
+    if (enable_debug_image)
+    {
       ROS_INFO("[OBR] debug_image is enabled.");
       pub_debug_image = ros_it.advertise("obzerver/debug_image", 1);
     }
 
-    if (enable_diff_image) {
+    if (enable_diff_image)
+    {
       ROS_INFO("[OBR] diff_image is enabled.");
       pub_diff_image = ros_it.advertise("obzerver/diff_image", 1);
     }
 
-    if (enable_stablized_image) {
+    if (enable_stablized_image)
+    {
       ROS_INFO("[OBR] stablized_image is enabled.");
       pub_stablized_image = ros_it.advertise("obzerver/stablized_image", 1);
     }
 
-    if (enable_simmat_image) {
+    if (enable_simmat_image)
+    {
       ROS_INFO("[OBR] simmat_image is enabled.");
       pub_simmat_image = ros_it.advertise("obzerver/simmat_image", 1);
     }
@@ -292,7 +334,8 @@ public:
     obz_log_config("obzerver_ros_node", param_log_file);
 
     feature_detector = new cv::FastFeatureDetector(param_ffd_threshold, true);
-    camera_tracker = new CameraTracker(param_hist_len, feature_detector, param_max_features, param_pylk_winsize, param_pylk_iters, param_pylk_eps);
+    camera_tracker = new CameraTracker(param_hist_len, feature_detector, param_max_features,
+                                       param_pylk_winsize, param_pylk_iters, param_pylk_eps);
     object_tracker = new ObjectTracker(param_num_particles, param_hist_len, param_fps);
 
     do_downsample = param_downsample_factor < 1.0 && param_downsample_factor > 0.0;
@@ -300,28 +343,28 @@ public:
 
   virtual void spin()
   {
-    // TODO: Check if fixed freq. is better
+    // TODO(mani-monaj): Check if fixed freq. is better
     ROS_INFO("[OBR] Setting ROS Loop Rate to %f hz", param_fps);
     ros::Rate rate(param_fps);
     while (ros::ok())
     {
       spinOnce();
-      if (!rate.sleep()) {
+      if (!rate.sleep())
+      {
         ROS_WARN("[OBR] Can not catch up with input image rate.");
       }
     }
   }
 
-  virtual void spinOnce ()
+  virtual void spinOnce()
   {
     Process();
     ros::spinOnce();
   }
-
 };
 
-int main(int argc, char* argv[]) {
-
+int main(int argc, char* argv[])
+{
   /* ROS Stuff */
   ros::init(argc, argv, "obzerver_ros");
   ros::NodeHandle ros_nh;
