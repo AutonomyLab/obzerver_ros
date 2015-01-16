@@ -1,0 +1,22 @@
+queue_size: 1
+obzerver_node:
+  enable_debug_image: true
+  enable_stablized_image: false
+  enable_diff_image: false
+  enable_simmat_image: false
+  obz_logfile: '/tmp/1'
+  downsample_factor: 1.0
+  fps: 29.97
+  max_features: 300
+  num_particles: 1000
+  history_length: 90
+  pylk_winsize: 30
+  pylk_iterations: 30
+  pylk_eps: 0.01
+  ffd_threshold: 30
+  skip_dc_term_count: 1
+avi2ros:
+  headless: true
+  loop: false
+eval_node:
+  dummy: true

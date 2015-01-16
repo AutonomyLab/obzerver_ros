@@ -22,7 +22,7 @@ find_package(OpenCV REQUIRED PATHS /home/autolab/Dev/opencv/opencv-2.4.10.1/buil
 
 include(ExternalProject)
 ExternalProject_Add(libobzerver
-  GIT_REPOSITORY https://bitbucket.org/mani-monaj/obzerver.git
+  GIT_REPOSITORY git@bitbucket.org:mani-monaj/obzerver.git
   GIT_TAG master
   PREFIX ${CATKIN_DEVEL_PREFIX}
   CMAKE_ARGS
@@ -62,7 +62,7 @@ generate_messages(
 )
 
 catkin_package(
-   INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES obzerver_ros
   CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib

@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="config_file" />
+  <arg name="input_video" />
+  <rosparam command="load" file="$(arg config_file)" />
+
+  <node name="avi2ros" pkg="avi2ros" type="avi2ros">
+    <param name="input" value="$(arg input_video)" />
+    <remap from="output" to="camera/image_raw" />
+  </node>
+  <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="screen" respawn="false" />
+   
+</launch>

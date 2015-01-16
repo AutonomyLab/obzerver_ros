@@ -21,8 +21,6 @@
   <run_depend>libgoogle-glog-dev</run_depend>
   <run_depend>libopencv-dev</run_depend>
 
-  <test_depend>gtest</test_depend>
-
   <!-- ros -->
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
@@ -36,6 +34,10 @@
   <run_depend>cv_bridge</run_depend>
   <run_depend>image_transport</run_depend>
   <run_depend>message_runtime</run_depend>
+  <run_depend>avi2ros</run_depend>
+
+  <!-- test -->
+  <test_depend>gtest</test_depend>
 
   <export>
   </export>

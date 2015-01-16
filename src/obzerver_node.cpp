@@ -40,132 +40,130 @@ class ObzerverROS
 {
 public:
   template<class T>
-  static void get_param(const std::string& param_name, T& var, const T default_value)
+  static void GetParam(const ros::NodeHandle& nh, const std::string& param_name, T& var, const T& default_value)
   {
-    ros::param::param(param_name, var, default_value);
+    nh.param<T>(param_name, var, default_value);
     ROS_INFO_STREAM("[OBR] Param " << param_name << " : " << var);
   }
 
 protected:
-//  ros::NodeHandle ros_nh;
-//  ros::NodeHandle ros_private_nh;
-  image_transport::ImageTransport ros_it;
-  image_transport::Subscriber sub_image;
+  ros::NodeHandle ros_nh_;
+  ros::NodeHandle private_nh_;
+  image_transport::ImageTransport ros_it_;
+  image_transport::Subscriber sub_image_;
 
-  image_transport::Publisher pub_debug_image;
-  image_transport::Publisher pub_stablized_image;
-  image_transport::Publisher pub_diff_image;
-  image_transport::Publisher pub_simmat_image;
-  ros::Publisher pub_object;
+  image_transport::Publisher pub_debug_image_;
+  image_transport::Publisher pub_stablized_image_;
+  image_transport::Publisher pub_diff_image_;
+  image_transport::Publisher pub_simmat_image_;
+  ros::Publisher pub_object_;
 
-  std::string param_image_topic;
-  std::string param_log_file;
+  std::string param_log_file_;
 
-  float param_downsample_factor;
-  float param_fps;
+  double param_downsample_factor_;
+  double param_fps_;
 
-  int param_max_features;
-  int param_num_particles;
-  int param_hist_len;
-  int param_pylk_winsize;
-  int param_pylk_iters;
-  double param_pylk_eps;
-  int param_ffd_threshold;
-  int param_skip_dc_term_count;
+  int param_max_features_;
+  int param_num_particles_;
+  int param_hist_len_;
+  int param_pylk_winsize_;
+  int param_pylk_iters_;
+  double param_pylk_eps_;
+  int param_ffd_threshold_;
+  int param_skip_dc_term_count_;
 
-  bool enable_debug_image;
-  bool enable_stablized_image;
-  bool enable_diff_image;
-  bool enable_simmat_image;
+  bool enable_debug_image_;
+  bool enable_stablized_image_;
+  bool enable_diff_image_;
+  bool enable_simmat_image_;
 
-  cv::Mat frame_input;
-  cv::Mat frame_gray;
-  unsigned int last_seq;
-  sensor_msgs::ImageConstPtr cache_msg;
-  cv_bridge::CvImageConstPtr frame_input_cvptr;
-  cv_bridge::CvImage frame_debug_cvi;
-  cv_bridge::CvImage frame_sim_cvi;
-  cv_bridge::CvImage frame_stab_cvi;
-  cv_bridge::CvImage frame_diff_cvi;
-  obzerver_ros::object out_object;
+  cv::Mat frame_input_;
+  cv::Mat frame_gray_;
+  unsigned int last_seq_;
+  sensor_msgs::ImageConstPtr cache_msg_;
+  cv_bridge::CvImageConstPtr frame_input_cvptr_;
+  cv_bridge::CvImage frame_debug_cvi_;
+  cv_bridge::CvImage frame_sim_cvi_;
+  cv_bridge::CvImage frame_stab_cvi_;
+  cv_bridge::CvImage frame_diff_cvi_;
+  obzerver_ros::object out_object_;
 
-  bool do_convert;
-  bool do_downsample;
-  cv::Ptr<cv::FeatureDetector> feature_detector;
-  cv::Ptr<CameraTracker> camera_tracker;
-  cv::Ptr<ObjectTracker> object_tracker;
-  std::size_t frame_counter;
+  bool do_convert_;
+  bool do_downsample_;
+  cv::Ptr<cv::FeatureDetector> feature_detector_;
+  cv::Ptr<CameraTracker> camera_tracker_;
+  cv::Ptr<ObjectTracker> object_tracker_;
+  std::size_t frame_counter_;
 
-  StepBenchmarker& ticker;
+  StepBenchmarker& ticker_;
 
-  void update_params()
+  void UpdateParams()
   {
-    get_param<bool>("~enable_debug_image", enable_debug_image, false);
-    get_param<bool>("~enable_stablized_image", enable_stablized_image, false);
-    get_param<bool>("~enable_diff_image", enable_diff_image, false);
-    get_param<bool>("~enable_simmat_image", enable_simmat_image, false);
+    GetParam<bool>(private_nh_, "enable_debug_image", enable_debug_image_, false);
+    GetParam<bool>(private_nh_, "enable_stablized_image", enable_stablized_image_, false);
+    GetParam<bool>(private_nh_, "enable_diff_image", enable_diff_image_, false);
+    GetParam<bool>(private_nh_, "enable_simmat_image", enable_simmat_image_, false);
 
-    get_param<std::string>("~image_topic", param_image_topic, std::string("camera/image_raw"));
-    get_param<std::string>("~obz_logfile", param_log_file, std::string(""));
-    get_param<float>("~downsample_factor", param_downsample_factor, 1.0);
-    get_param<float>("~fps", param_fps, 30.0);
-    get_param<int>("~max_features", param_max_features, 300);
-    get_param<int>("~num_particles", param_num_particles, 1000);
-    get_param<int>("~history_length", param_hist_len, 90);
-    get_param<int>("~pylk_winsize", param_pylk_winsize, 30);
-    get_param<int>("~pylk_iterations", param_pylk_iters, 30);
-    get_param<double>("~pylk_eps", param_pylk_eps, 0.01);
-    get_param<int>("~ffd_threshold", param_ffd_threshold, 30);
-    get_param<int>("~skip_dc_term_count", param_skip_dc_term_count, 1);
+    GetParam<std::string>(private_nh_, "obz_logfile", param_log_file_, std::string(""));
+    GetParam<double>(private_nh_, "downsample_factor", param_downsample_factor_, 1.0);
+    GetParam<double>(private_nh_, "fps", param_fps_, 30.0);
+    GetParam<int>(private_nh_, "max_features", param_max_features_, 300);
+    GetParam<int>(private_nh_, "num_particles", param_num_particles_, 1000);
+    GetParam<int>(private_nh_, "history_length", param_hist_len_, 90);
+    GetParam<int>(private_nh_, "pylk_winsize", param_pylk_winsize_, 30);
+    GetParam<int>(private_nh_, "pylk_iterations", param_pylk_iters_, 30);
+    GetParam<double>(private_nh_, "pylk_eps", param_pylk_eps_, 0.01);
+    GetParam<int>(private_nh_, "ffd_threshold", param_ffd_threshold_, 30);
+    GetParam<int>(private_nh_, "skip_dc_term_count", param_skip_dc_term_count_, 1);
   }
 
   void Process()
   {
-    ticker.reset();
+    ticker_.reset();
 
     // Do nothing when there is no new frame
-    if (!cache_msg || last_seq == cache_msg->header.seq) return;
-    last_seq = cache_msg->header.seq;
+    if (!cache_msg_ || last_seq_ == cache_msg_->header.seq) return;
+    last_seq_ = cache_msg_->header.seq;
 
     float _f = -1.0;
     try
     {
-      if (sensor_msgs::image_encodings::isColor(cache_msg->encoding))
+      if (sensor_msgs::image_encodings::isColor(cache_msg_->encoding))
       {
         ROS_WARN_ONCE("[OBR] Input image is BGR8");
-        frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::BGR8);
-        do_convert = true;
+        frame_input_cvptr_ = cv_bridge::toCvShare(cache_msg_, sensor_msgs::image_encodings::BGR8);
+        do_convert_ = true;
       }
       else
       {
         ROS_WARN_ONCE("[OBR] Input image is MONO8");
-        frame_input_cvptr = cv_bridge::toCvShare(cache_msg, sensor_msgs::image_encodings::MONO8);
-        do_convert = false;
+        frame_input_cvptr_ = cv_bridge::toCvShare(cache_msg_, sensor_msgs::image_encodings::MONO8);
+        do_convert_ = false;
       }
 
-      frame_input = frame_input_cvptr->image;  // No Copy For Now
-      ticker.tick("Frame Copy");
-      if (do_downsample)
+      frame_input_ = frame_input_cvptr_->image;  // No Copy For Now
+      ticker_.tick("Frame Copy");
+      if (do_downsample_)
       {
-        cv::resize(frame_input, frame_input, cv::Size(0, 0),
-                   param_downsample_factor, param_downsample_factor, cv::INTER_CUBIC);
-        ticker.tick("Downsampling.");
+        cv::resize(frame_input_, frame_input_, cv::Size(0, 0),
+                   param_downsample_factor_, param_downsample_factor_, cv::INTER_CUBIC);
+        ticker_.tick("Downsampling.");
       }
 
-      frame_gray = frame_input;  // No Copy for now
-      if (do_convert)
+      frame_gray_ = frame_input_;  // No Copy for now
+      if (do_convert_)
       {
-        cv::cvtColor(frame_input, frame_gray, cv::COLOR_BGR2GRAY);
-        ticker.tick("Frame 2 Gray");
+        cv::cvtColor(frame_input_, frame_gray_, cv::COLOR_BGR2GRAY);
+        ticker_.tick("Frame 2 Gray");
       }
 
-      LOG(INFO) << "Frame: " << frame_counter << " [" << frame_input.cols << " x " << frame_input.rows << "]";
+      LOG(INFO) << "Frame: " << frame_counter_ << " [" << frame_input_.cols << " x " << frame_input_.rows << "]";
 
-      const bool ct_success = camera_tracker->Update(frame_gray, frame_input);
+      const bool ct_success = camera_tracker_->Update(frame_gray_, frame_input_);
 
-      out_object.header.stamp = ros::Time::now();
-      out_object.header.frame_id = frame_input_cvptr->header.frame_id;
-      out_object.status = 0;
+      out_object_.header.stamp = ros::Time::now();
+      out_object_.header.frame_id = frame_input_cvptr_->header.frame_id;
+      out_object_.status = 0;
       if (!ct_success)
       {
         LOG(WARNING) << "Camera Tracker Failed";
@@ -173,69 +171,69 @@ protected:
       }
       else
       {
-        object_tracker->Update(camera_tracker->GetStablizedGray(),
-                               camera_tracker->GetLatestDiff(),
-                               camera_tracker->GetLatestSOF(),
-                               camera_tracker->GetLatestCameraTransform());
+        object_tracker_->Update(camera_tracker_->GetStablizedGray(),
+                               camera_tracker_->GetLatestDiff(),
+                               camera_tracker_->GetLatestSOF(),
+                               camera_tracker_->GetLatestCameraTransform());
 
-        out_object.status = object_tracker->GetStatus();
+        out_object_.status = object_tracker_->GetStatus();
 
-        LOG(INFO) << "Tracking status: " << object_tracker->GetStatus();
-        if (object_tracker->IsTracking())
+        LOG(INFO) << "Tracking status: " << object_tracker_->GetStatus();
+        if (object_tracker_->IsTracking())
         {
            // TODO(mani-monaj)
-          _f = object_tracker->GetObject().GetPeriodicity().GetDominantFrequency(param_skip_dc_term_count);
+          _f = object_tracker_->GetObject().GetPeriodicity().GetDominantFrequency(param_skip_dc_term_count_);
           LOG(INFO) << "Object: "
-                    << object_tracker->GetObjectBoundingBox()
+                    << object_tracker_->GetObjectBoundingBox()
                     << " Periodicity:"
                     << _f;
-          out_object.roi.x_offset = object_tracker->GetObjectBoundingBox().tl().x;
-          out_object.roi.y_offset = object_tracker->GetObjectBoundingBox().tl().y;
-          out_object.roi.width = object_tracker->GetObjectBoundingBox().width;
-          out_object.roi.height = object_tracker->GetObjectBoundingBox().height;
-          out_object.max_width = frame_input.cols;
-          out_object.max_height = frame_input.rows;
-          out_object.spectrum = object_tracker->GetObject().GetPeriodicity().GetSpectrum();
-          out_object.dominant_freq = _f;
-          out_object.displacement = 0.0;  // TODO(mani-monaj)
+          out_object_.roi.x_offset = object_tracker_->GetObjectBoundingBox().tl().x;
+          out_object_.roi.y_offset = object_tracker_->GetObjectBoundingBox().tl().y;
+          out_object_.roi.width = object_tracker_->GetObjectBoundingBox().width;
+          out_object_.roi.height = object_tracker_->GetObjectBoundingBox().height;
+          out_object_.max_width = frame_input_.cols;
+          out_object_.max_height = frame_input_.rows;
+          out_object_.spectrum = object_tracker_->GetObject().GetPeriodicity().GetSpectrum();
+          out_object_.dominant_freq = _f;
+          out_object_.displacement = 0.0;  // TODO(mani-monaj)
         }
 
         // Publish
 
-        if (pub_object.getNumSubscribers() > 0)
+        if (pub_object_.getNumSubscribers() > 0)
         {
-          pub_object.publish(out_object);
+          pub_object_.publish(out_object_);
         }
 
         if (
-          enable_stablized_image &&
-          pub_stablized_image.getNumSubscribers() > 0 &&
-          camera_tracker->GetStablizedGray().data
+          enable_stablized_image_ &&
+          pub_stablized_image_.getNumSubscribers() > 0 &&
+          camera_tracker_->GetStablizedGray().data
         )
         {
-          frame_stab_cvi.image = camera_tracker->GetStablizedGray();
-          frame_stab_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
-          frame_stab_cvi.header.stamp = frame_input_cvptr->header.stamp;
-          frame_stab_cvi.encoding = "mono8";
-          object_tracker->DrawParticles(frame_stab_cvi.image);
-          pub_stablized_image.publish(frame_stab_cvi.toImageMsg());
+          frame_stab_cvi_.image = camera_tracker_->GetStablizedGray();
+          frame_stab_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
+          frame_stab_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
+          frame_stab_cvi_.encoding = "mono8";
+          object_tracker_->DrawParticles(frame_stab_cvi_.image);
+          pub_stablized_image_.publish(frame_stab_cvi_.toImageMsg());
         }
 
         if (
-          enable_debug_image &&
-          pub_debug_image.getNumSubscribers() > 0 &&
-          frame_input.data
+          enable_debug_image_ &&
+          pub_debug_image_.getNumSubscribers() > 0 &&
+          frame_input_.data
         )
         {
-          frame_debug_cvi.image = frame_input;
-          frame_debug_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
-          frame_debug_cvi.header.stamp = frame_input_cvptr->header.stamp;
-          frame_debug_cvi.encoding = do_convert ? "bgr8" : "mono8";
+          frame_debug_cvi_.image = frame_input_;
+          frame_debug_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
+          frame_debug_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
+          frame_debug_cvi_.encoding = do_convert_ ? "bgr8" : "mono8";
 
-          drawFeaturePointsTrajectory(frame_debug_cvi.image,
-                                      camera_tracker->GetHomographyOutliers(),
-                                      camera_tracker->GetTrackedFeaturesPrev(),
-                                      camera_tracker->GetTrackedFeaturesCurr(),
+          drawFeaturePointsTrajectory(frame_debug_cvi_.image,
+                                      camera_tracker_->GetHomographyOutliers(),
+                                      camera_tracker_->GetTrackedFeaturesPrev(),
+                                      camera_tracker_->GetTrackedFeaturesCurr(),
                                       2,
                                       cv::Scalar(127, 127, 127),
                                       cv::Scalar(0, 0, 255),
@@ -243,41 +241,41 @@ protected:
 
           std::stringstream ss;
           ss << std::setprecision(5) << "Periodicity: " << _f;
-          cv::putText(frame_debug_cvi.image, ss.str(), cv::Point(40, 40), 1,
+          cv::putText(frame_debug_cvi_.image, ss.str(), cv::Point(40, 40), 1,
                       CV_FONT_HERSHEY_PLAIN, cv::Scalar(0, 0, 255));
 
-          pub_debug_image.publish(frame_debug_cvi.toImageMsg());
+          pub_debug_image_.publish(frame_debug_cvi_.toImageMsg());
         }
 
         if (
-          enable_diff_image &&
-          pub_diff_image.getNumSubscribers() > 0 &&
-          camera_tracker->GetLatestDiff().data
+          enable_diff_image_ &&
+          pub_diff_image_.getNumSubscribers() > 0 &&
+          camera_tracker_->GetLatestDiff().data
         )
         {
-          frame_diff_cvi.image = camera_tracker->GetLatestDiff();
-          frame_diff_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
-          frame_diff_cvi.header.stamp = frame_input_cvptr->header.stamp;
-          frame_diff_cvi.encoding = "mono8";
-          pub_diff_image.publish(frame_diff_cvi.toImageMsg());
+          frame_diff_cvi_.image = camera_tracker_->GetLatestDiff();
+          frame_diff_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
+          frame_diff_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
+          frame_diff_cvi_.encoding = "mono8";
+          pub_diff_image_.publish(frame_diff_cvi_.toImageMsg());
         }
 
         if (
-          enable_simmat_image &&
-          pub_simmat_image.getNumSubscribers() > 0 &&
-          object_tracker->IsTracking()
+          enable_simmat_image_ &&
+          pub_simmat_image_.getNumSubscribers() > 0 &&
+          object_tracker_->IsTracking()
         )
         {
-          frame_sim_cvi.image = object_tracker->GetObject().GetSelfSimilarity().GetSimMatrixRendered();
-          frame_sim_cvi.header.frame_id = frame_input_cvptr->header.frame_id;
-          frame_sim_cvi.header.stamp = frame_input_cvptr->header.stamp;
-          frame_sim_cvi.encoding = "mono8";
-          pub_simmat_image.publish(frame_sim_cvi.toImageMsg());
+          frame_sim_cvi_.image = object_tracker_->GetObject().GetSelfSimilarity().GetSimMatrixRendered();
+          frame_sim_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
+          frame_sim_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
+          frame_sim_cvi_.encoding = "mono8";
+          pub_simmat_image_.publish(frame_sim_cvi_.toImageMsg());
         }
 
-        ticker.tick("Visualization");
-        frame_counter++;
-        LOG(INFO) << ticker.getstr();
+        ticker_.tick("Visualization");
+        frame_counter_++;
+        LOG(INFO) << ticker_.getstr();
       }
     }
     catch (const cv_bridge::Exception& e)
@@ -288,64 +286,66 @@ protected:
 
   void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    cache_msg = msg;
+    cache_msg_ = msg;
   }
 
 public:
   ObzerverROS(const int queue_size, ros::NodeHandle& ros_nh):
-    ros_it(ros_nh),
-    last_seq(-1),
-    frame_counter(0),
-    ticker(StepBenchmarker::GetInstance())
+    ros_nh_(ros_nh),
+    private_nh_("~"),
+    ros_it_(ros_nh),
+    last_seq_(-1),
+    frame_counter_(0),
+    ticker_(StepBenchmarker::GetInstance())
   {
-    update_params();
+    UpdateParams();
 
-    sub_image = ros_it.subscribe(
-                  param_image_topic,
+    sub_image_ = ros_it_.subscribe(
+                  "camera/image_raw",
                   queue_size,
                   &ObzerverROS::ImageCallback,
                   this);
-    pub_object = ros_nh.advertise<obzerver_ros::object>("obzerver/object", 20);
+    pub_object_ = ros_nh_.advertise<obzerver_ros::object>("obzerver/object", 20);
 
-    if (enable_debug_image)
+    if (enable_debug_image_)
     {
       ROS_INFO("[OBR] debug_image is enabled.");
-      pub_debug_image = ros_it.advertise("obzerver/debug_image", 1);
+      pub_debug_image_ = ros_it_.advertise("obzerver/debug_image", 1);
     }
 
-    if (enable_diff_image)
+    if (enable_diff_image_)
     {
       ROS_INFO("[OBR] diff_image is enabled.");
-      pub_diff_image = ros_it.advertise("obzerver/diff_image", 1);
+      pub_diff_image_ = ros_it_.advertise("obzerver/diff_image", 1);
     }
 
-    if (enable_stablized_image)
+    if (enable_stablized_image_)
     {
       ROS_INFO("[OBR] stablized_image is enabled.");
-      pub_stablized_image = ros_it.advertise("obzerver/stablized_image", 1);
+      pub_stablized_image_ = ros_it_.advertise("obzerver/stablized_image", 1);
     }
 
-    if (enable_simmat_image)
+    if (enable_simmat_image_)
     {
       ROS_INFO("[OBR] simmat_image is enabled.");
-      pub_simmat_image = ros_it.advertise("obzerver/simmat_image", 1);
+      pub_simmat_image_ = ros_it_.advertise("obzerver/simmat_image", 1);
     }
 
-    obz_log_config("obzerver_ros_node", param_log_file);
+    obz_log_config("obzerver_ros_node", param_log_file_);
 
-    feature_detector = new cv::FastFeatureDetector(param_ffd_threshold, true);
-    camera_tracker = new CameraTracker(param_hist_len, feature_detector, param_max_features,
-                                       param_pylk_winsize, param_pylk_iters, param_pylk_eps);
-    object_tracker = new ObjectTracker(param_num_particles, param_hist_len, param_fps);
+    feature_detector_ = new cv::FastFeatureDetector(param_ffd_threshold_, true);
+    camera_tracker_ = new CameraTracker(param_hist_len_, feature_detector_, param_max_features_,
+                                       param_pylk_winsize_, param_pylk_iters_, param_pylk_eps_);
+    object_tracker_ = new ObjectTracker(param_num_particles_, param_hist_len_, param_fps_);
 
-    do_downsample = param_downsample_factor < 1.0 && param_downsample_factor > 0.0;
+    do_downsample_ = param_downsample_factor_ < 1.0 && param_downsample_factor_ > 0.0;
   }
 
   virtual void spin()
   {
     // TODO(mani-monaj): Check if fixed freq. is better
-    ROS_INFO("[OBR] Setting ROS Loop Rate to %f hz", param_fps);
-    ros::Rate rate(param_fps);
+    ROS_INFO("[OBR] Setting ROS Loop Rate to %f hz", param_fps_);
+    ros::Rate rate(param_fps_);
     while (ros::ok())
     {
       spinOnce();
@@ -369,7 +369,7 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "obzerver_ros");
   ros::NodeHandle ros_nh;
   int param_queue_size;
-  ObzerverROS::get_param<int>("~queue_size", param_queue_size, 1);
+  ObzerverROS::GetParam<int>(ros_nh, "queue_size", param_queue_size, 1);
   ObzerverROS obzerver_ros(param_queue_size, ros_nh);
 
   /* Main Loop */
