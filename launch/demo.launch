@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
   <arg name="logfile" default="/tmp/obzerver_ros" />
-  <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="screen">
+  <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="screen" respawn="true">
     <param name="enable_debug_image" value="false" />
     <param name="enable_diff_image" value="false" />
     <param name="enable_simmat_image" value="false" />
