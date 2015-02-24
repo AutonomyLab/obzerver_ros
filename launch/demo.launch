@@ -1,15 +1,15 @@
+<?xml version="1.0" ?>
 <launch>
+  <arg name="logfile" default="/tmp/obzerver_ros" />
   <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="screen">
-    <param name="enable_debug_image" value="true" />
-    <param name="enable_diff_image" value="true" />
-    <param name="enable_simmat_image" value="true" />
+    <param name="enable_debug_image" value="false" />
+    <param name="enable_diff_image" value="false" />
+    <param name="enable_simmat_image" value="false" />
     <param name="enable_stablized_image" value="true" />
-
-    <param name="obz_logfile" value="" />
+    <param name="obz_logfile" value="$(arg logfile)" />
+    <param name="obz_configfile" value="$(find obzerver_ros)/config/pelican.ini" />
     <param name="downsample_factor" value="1.0" />
     <param name="queue_size" value="1" />
-    <param name="max_features" value="100" />
-    <param name="image_topic" value="camera/image_raw" />
     <param name="image_transport" value="compressed" />
   </node>
 </launch>

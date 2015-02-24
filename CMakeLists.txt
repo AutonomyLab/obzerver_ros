@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(obzerver_ros)
 
-# TODO: This is because of smtc
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Wall -Wextra")
+# CMAKE_PREFIX_PATH has higher priority than $ENV{CMAKE_PREFIX_PATH}
+# catkin workspace's setup file sets the latter, so messing with
+# the former will break catkin
+
+set(CUSTOM_OPENCV_DIR "/local_home/opencv/opencv-2.4.10.1/install")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -14,22 +19,22 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost 1.45 REQUIRED COMPONENTS program_options)
 
-#find_package(OpenCV REQUIRED)
-# TODO: Use params same as obzerver
-find_package(OpenCV REQUIRED PATHS /home/autolab/Dev/opencv/opencv-2.4.10.1/build NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
 
+# TODO: Inherit obzerver libs and include_dirs
 include(ExternalProject)
 ExternalProject_Add(libobzerver
-  GIT_REPOSITORY git@bitbucket.org:mani-monaj/obzerver.git
+  #GIT_REPOSITORY git@bitbucket.org:AutonomyLab/obzerver.git
+  GIT_REPOSITORY /home/mani/Dev/obzerver
   GIT_TAG master
   PREFIX ${CATKIN_DEVEL_PREFIX}
   CMAKE_ARGS
     -DWITH_TESTS=0
-    -DUSE_CUSTOM_OPENCV=1
-    -DOpenCV_DIR=/home/autolab/Dev/opencv/opencv-2.4.10.1/build
-    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} # TODO: Is it required or inherited?
+    -DCMAKE_PREFIX_PATH=${CUSTOM_OPENCV_DIR}
+    -DCMAKE_BUILD_TYPE=Release
+    -DEXTERNAL_DEVEL_SPACE=${CATKIN_DEVEL_PREFIX}
     -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
   BUILD_COMMAND make
   INSTALL_COMMAND make install
@@ -44,7 +49,8 @@ ExternalProject_Add(libobzerver
 ## Generate messages in the 'msg' folder
 add_message_files(
  FILES
- object.msg
+ Track.msg
+ Tracks.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -75,6 +81,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
   ${CATKIN_DEVEL_PREFIX}/include
 )
 
@@ -90,6 +97,7 @@ add_dependencies(obzerver_node ${PROJECT_NAME}_generate_messages_cpp libobzerver
 target_link_libraries(obzerver_node
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${Boost_LIBRARIES}
   obzerver
   glog # TODO: This is an inherited dependency from libobzerver, both the folder and libname should be inherited
 )
