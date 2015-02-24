@@ -26,8 +26,8 @@ find_package(OpenCV REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
 # TODO: Inherit obzerver libs and include_dirs
 include(ExternalProject)
 ExternalProject_Add(libobzerver
-  #GIT_REPOSITORY git@bitbucket.org:AutonomyLab/obzerver.git
-  GIT_REPOSITORY /home/mani/Dev/obzerver
+  GIT_REPOSITORY https://bitbucket.org/AutonomyLab/obzerver.git
+  #GIT_REPOSITORY /home/mani/Dev/obzerver
   GIT_TAG master
   PREFIX ${CATKIN_DEVEL_PREFIX}
   CMAKE_ARGS
