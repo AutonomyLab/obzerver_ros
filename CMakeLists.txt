@@ -5,7 +5,7 @@ project(obzerver_ros)
 # catkin workspace's setup file sets the latter, so messing with
 # the former will break catkin
 
-set(CUSTOM_OPENCV_DIR "/local_home/opencv/opencv-2.4.10.1/install")
+set(CUSTOM_OPENCV_DIR "/home/autolab/opencv/opencv-2.4.10.1/install")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
 
