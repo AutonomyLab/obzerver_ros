@@ -113,10 +113,10 @@ protected:
 
   void Process()
   {
-    StepBenchmarker::GetInstance().reset();
-
     // Do nothing when there is no new frame
     if (!cache_msg_ || last_seq_ == cache_msg_->header.seq) return;
+
+    StepBenchmarker::GetInstance().reset();
     last_seq_ = cache_msg_->header.seq;
 
     try
@@ -199,8 +199,9 @@ protected:
         pub_diff_image_.publish(frame_diff_cvi_.toImageMsg());
       }
 
-      TICK("Visualization");
       frame_counter_++;
+
+      TICK("Visualization");
       LOG(INFO) << StepBenchmarker::GetInstance().getstr();
     }
     catch (const cv_bridge::Exception& e)
