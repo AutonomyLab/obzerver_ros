@@ -199,6 +199,27 @@ protected:
         pub_diff_image_.publish(frame_diff_cvi_.toImageMsg());
       }
 
+      if (
+          enable_debug_image_ &&
+          pub_debug_image_.getNumSubscribers() > 0 &&
+          papp.GetCTCstPtr()->GetStablizedRGB().data
+          )
+      {
+        frame_debug_cvi_.image = papp.GetCTCstPtr()->GetStablizedRGB().clone();
+        if (papp.GetCTCstPtr()->GetTrackedFeaturesCurr().size()) {
+          obz::util::DrawFeaturePointsTrajectory(frame_debug_cvi_.image,
+                                                 papp.GetCTCstPtr()->GetHomographyOutliers(),
+                                                 papp.GetCTCstPtr()->GetTrackedFeaturesPrev(),
+                                                 papp.GetCTCstPtr()->GetTrackedFeaturesCurr(),
+                                                 2,
+                                                 CV_RGB(0,0,255), CV_RGB(255, 0, 0), CV_RGB(255, 0, 0));
+        }
+        frame_debug_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
+        frame_debug_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
+        frame_debug_cvi_.encoding = "bgr8";
+        pub_debug_image_.publish(frame_debug_cvi_.toImageMsg());
+      }
+
       frame_counter_++;
 
       TICK("Visualization");
