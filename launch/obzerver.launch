@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- new launch file -->
+  <arg name="obz_logfile" default="/tmp/obzerver_ros" />
+  <arg name="obz_configfile" default="$(find obzerver_ros)/config/pelican.ini" />
+  <arg name="param_file" default="$(find obzerver_ros)/config/obzerver.yaml" />
+  <arg name="image_transport" default="compressed" />
+  <arg name="output" default="screen" />
+  <arg name="input_topic" default="camera/image_raw" />
+
+  <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="$(arg output)" respawn="true">
+    <remap from="image_raw" to="$(arg input_topic)" />
+    <rosparam command="load" file="$(arg param_file)" />
+    <param name="obz_logfile" value="$(arg obz_logfile)" />
+    <param name="obz_configfile" value="$(arg obz_configfile)" />
+  </node>
+</launch>

@@ -23,6 +23,7 @@
 #include "cv_bridge/cv_bridge.h"
 #include "sensor_msgs/image_encodings.h"
 #include "sensor_msgs/RegionOfInterest.h"
+#include "std_msgs/Bool.h"
 
 #include "obzerver/periodicity_app.hpp"
 #include "obzerver_ros/Tracks.h"
@@ -58,10 +59,13 @@ public:
   }
 
 protected:
+  bool paused;
+
   ros::NodeHandle ros_nh_;
   ros::NodeHandle private_nh_;
   image_transport::ImageTransport ros_it_;
   image_transport::Subscriber sub_image_;
+  ros::Subscriber sub_enable_;
 
   image_transport::Publisher pub_debug_image_;
   image_transport::Publisher pub_stablized_image_;
@@ -96,7 +100,7 @@ protected:
   bool do_downsample_;
   std::size_t frame_counter_;
 
-  obz::app::PeriodicityApp papp;
+  std::shared_ptr<obz::app::PeriodicityApp> papp_ptr_;
   std::vector<obz::Track> tracks;
 
   void UpdateParams()
@@ -109,12 +113,15 @@ protected:
     GetParam<std::string>(private_nh_, "obz_configfile", param_cfg_file_, std::string(""));
     GetParam<std::string>(private_nh_, "obz_logfile", param_log_file_, std::string(""));
     GetParam<double>(private_nh_, "downsample_factor", param_downsample_factor_, 1.0);
+
+    GetParam<bool>(private_nh_, "start_paused", paused, false);
   }
 
   void Process()
   {
     // Do nothing when there is no new frame
-    if (!cache_msg_ || last_seq_ == cache_msg_->header.seq) return;
+    if (paused || !cache_msg_ || last_seq_ == cache_msg_->header.seq) return;
+    if (!papp_ptr_) throw std::runtime_error("Obzerver app is NULL");
 
     StepBenchmarker::GetInstance().reset();
     last_seq_ = cache_msg_->header.seq;
@@ -144,7 +151,7 @@ protected:
 
       LOG(INFO) << "Frame: " << frame_counter_ << " [" << frame_input_.cols << " x " << frame_input_.rows << "]";
 
-      papp.Update(frame_input_);
+      papp_ptr_->Update(frame_input_);
 
       all_tracks_msg_.header.stamp = ros::Time::now();
       all_tracks_msg_.header.frame_id = frame_input_cvptr_->header.frame_id;
@@ -156,12 +163,12 @@ protected:
       per_tracks_msg_.max_height = frame_input_cvptr_->image.rows;
 
       // tracks will be cleared
-      papp.GetMOTPtr()->CopyAllTracks(tracks);
+      papp_ptr_->GetMOTPtr()->CopyAllTracks(tracks);
       CopyTracksToMsg(tracks, all_tracks_msg_);
       ROS_ASSERT(tracks.size() == all_tracks_msg_.tracks.size());
 
       // tracks will be cleared
-      papp.GetPeriodicTracks(tracks);
+      papp_ptr_->GetPeriodicTracks(tracks);
       CopyTracksToMsg(tracks, per_tracks_msg_);
       ROS_ASSERT(tracks.size() == per_tracks_msg_.tracks.size());
 
@@ -175,24 +182,24 @@ protected:
       if (
           enable_stablized_image_ &&
           pub_stablized_image_.getNumSubscribers() > 0 &&
-          papp.GetCTCstPtr()->GetStablizedRGB().data
+          papp_ptr_->GetCTCstPtr()->GetStablizedRGB().data
           )
       {
-        frame_stab_cvi_.image = papp.GetCTCstPtr()->GetStablizedRGB();
+        frame_stab_cvi_.image = papp_ptr_->GetCTCstPtr()->GetStablizedRGB();
         frame_stab_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
         frame_stab_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
         frame_stab_cvi_.encoding = "bgr8";
-        papp.GetMOTPtr()->DrawTracks(frame_stab_cvi_.image);
+        papp_ptr_->GetMOTPtr()->DrawTracks(frame_stab_cvi_.image);
         pub_stablized_image_.publish(frame_stab_cvi_.toImageMsg());
       }
 
       if (
           enable_diff_image_ &&
           pub_diff_image_.getNumSubscribers() > 0 &&
-          papp.GetCTCstPtr()->GetLatestDiff().data
+          papp_ptr_->GetCTCstPtr()->GetLatestDiff().data
           )
       {
-        frame_diff_cvi_.image = papp.GetCTCstPtr()->GetLatestDiff();
+        frame_diff_cvi_.image = papp_ptr_->GetCTCstPtr()->GetLatestDiff();
         frame_diff_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
         frame_diff_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
         frame_diff_cvi_.encoding = "mono8";
@@ -202,15 +209,15 @@ protected:
       if (
           enable_debug_image_ &&
           pub_debug_image_.getNumSubscribers() > 0 &&
-          papp.GetCTCstPtr()->GetStablizedRGB().data
+          papp_ptr_->GetCTCstPtr()->GetStablizedRGB().data
           )
       {
-        frame_debug_cvi_.image = papp.GetCTCstPtr()->GetStablizedRGB().clone();
-        if (papp.GetCTCstPtr()->GetTrackedFeaturesCurr().size()) {
+        frame_debug_cvi_.image = papp_ptr_->GetCTCstPtr()->GetStablizedRGB().clone();
+        if (papp_ptr_->GetCTCstPtr()->GetTrackedFeaturesCurr().size()) {
           obz::util::DrawFeaturePointsTrajectory(frame_debug_cvi_.image,
-                                                 papp.GetCTCstPtr()->GetHomographyOutliers(),
-                                                 papp.GetCTCstPtr()->GetTrackedFeaturesPrev(),
-                                                 papp.GetCTCstPtr()->GetTrackedFeaturesCurr(),
+                                                 papp_ptr_->GetCTCstPtr()->GetHomographyOutliers(),
+                                                 papp_ptr_->GetCTCstPtr()->GetTrackedFeaturesPrev(),
+                                                 papp_ptr_->GetCTCstPtr()->GetTrackedFeaturesCurr(),
                                                  2,
                                                  CV_RGB(0,0,255), CV_RGB(255, 0, 0), CV_RGB(255, 0, 0));
         }
@@ -236,27 +243,63 @@ protected:
     cache_msg_ = msg;
   }
 
+  void EnableCallback(const std_msgs::BoolConstPtr& msg)
+  {
+    const bool en = static_cast<bool>(msg->data);
+    ROS_WARN_STREAM("[OBR] Request to " << (en ? "Enable" : "Disable"));
+
+    if (paused && en)
+    {
+      ReinitObzerverApp();
+    }
+
+    if (!paused && !en)
+    {
+       // TODO: Cleanup??
+    }
+
+    paused = !en;
+  }
+
+  void ReinitObzerverApp()
+  {
+    ROS_WARN("[OBR] Reinitializing obzerver ...");
+    boost::program_options::variables_map vm;
+    papp_ptr_ = std::make_shared<obz::app::PeriodicityApp>();
+    if (!papp_ptr_->Init(param_cfg_file_, param_log_file_, false, std::string(""), vm))
+    {
+      throw std::runtime_error("Error initializing obz::PeriodicityApp");
+    }
+  }
+
 public:
   ObzerverROS(const int queue_size, ros::NodeHandle& ros_nh):
+    paused(false),
     ros_nh_(ros_nh),
     private_nh_("~"),
     ros_it_(ros_nh),
     last_seq_(-1),
-    frame_counter_(0)
+    frame_counter_(0),
+    papp_ptr_()
   {
     UpdateParams();
 
-    boost::program_options::variables_map vm;
-    if (!papp.Init(param_cfg_file_, param_log_file_, false, std::string(""), vm))
+    if (!paused)
     {
-      throw std::runtime_error("Error initializing obz::PeriodicityApp");
+      ReinitObzerverApp();
+    }
+    else
+    {
+      ROS_ERROR("[OBR] Starting in pause state");
     }
 
     sub_image_ = ros_it_.subscribe(
-          "camera/image_raw",
+          "image_raw",
           queue_size,
           &ObzerverROS::ImageCallback,
           this);
+
+    sub_enable_ = ros_nh_.subscribe("obzerver/enable", 10, &ObzerverROS::EnableCallback, this);
 
     pub_all_tracks_ = ros_nh_.advertise<obzerver_ros::Tracks>("obzerver/tracks/all", 30);
     pub_per_tracks_ = ros_nh_.advertise<obzerver_ros::Tracks>("obzerver/tracks/periodic", 30);
@@ -264,25 +307,25 @@ public:
     if (enable_debug_image_)
     {
       ROS_INFO("[OBR] debug_image is enabled.");
-      pub_debug_image_ = ros_it_.advertise("obzerver/debug_image", 1);
+      pub_debug_image_ = ros_it_.advertise("obzerver/debug/image_raw", 1);
     }
 
     if (enable_diff_image_)
     {
       ROS_INFO("[OBR] diff_image is enabled.");
-      pub_diff_image_ = ros_it_.advertise("obzerver/diff_image", 1);
+      pub_diff_image_ = ros_it_.advertise("obzerver/diff/image_raw", 1);
     }
 
     if (enable_stablized_image_)
     {
       ROS_INFO("[OBR] stablized_image is enabled.");
-      pub_stablized_image_ = ros_it_.advertise("obzerver/stablized_image", 1);
+      pub_stablized_image_ = ros_it_.advertise("obzerver/stablized/image_raw", 1);
     }
 
     if (enable_simmat_image_)
     {
       ROS_INFO("[OBR] simmat_image is enabled.");
-      pub_simmat_image_ = ros_it_.advertise("obzerver/simmat_image", 1);
+      pub_simmat_image_ = ros_it_.advertise("obzerver/simmat/image_raw", 1);
     }
 
     do_downsample_ = param_downsample_factor_ < 1.0 && param_downsample_factor_ > 0.0;
@@ -319,23 +362,23 @@ int main(int argc, char* argv[])
 
   ObzerverROS::GetParam<int>(ros_nh, "queue_size", param_queue_size, 1);
 
-
   try
   {
     ObzerverROS obzerver_ros(param_queue_size, ros_nh);
     obzerver_ros.spin();
   }
-  catch (std::runtime_error& ex)
+  catch (const ros::Exception& ex)
   {
-    ROS_FATAL_STREAM("[OBZ] Runtime error: " << ex.what());
-    return 1;
+    ROS_ERROR_STREAM("[OBZ] ROS Exception: " << ex.what());
   }
-  catch (cv::Exception& ex)
+  catch (const std::runtime_error& ex)
   {
-    ROS_FATAL_STREAM("[OBZ] OpenCV Exception: " << ex.what());
-    return 2;
+    ROS_ERROR_STREAM("[OBZ] Runtime error: " << ex.what());
   }
-
+  catch (const cv::Exception& ex)
+  {
+    ROS_ERROR_STREAM("[OBZ] OpenCV Exception: " << ex.what());
+  }
 
   return 0;
 }

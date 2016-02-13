@@ -1,0 +1,8 @@
+start_paused: false
+enable_debug_image: false
+enable_diff_image: false
+enable_simmat_image: false
+enable_stablized_image: true
+downsample_factor: 1.0
+queue_size: 1
+image_transport: "compressed"
