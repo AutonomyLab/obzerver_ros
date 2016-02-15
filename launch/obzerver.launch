@@ -7,11 +7,13 @@
   <arg name="image_transport" default="compressed" />
   <arg name="output" default="screen" />
   <arg name="input_topic" default="camera/image_raw" />
+  <arg name="start_paused" default="false" />
 
   <node name="obzerver_node" pkg="obzerver_ros" type="obzerver_node" clear_params="true" output="$(arg output)" respawn="true">
     <remap from="image_raw" to="$(arg input_topic)" />
     <rosparam command="load" file="$(arg param_file)" />
     <param name="obz_logfile" value="$(arg obz_logfile)" />
     <param name="obz_configfile" value="$(arg obz_configfile)" />
+    <param name="start_paused" value="$(arg start_paused)" />
   </node>
 </launch>

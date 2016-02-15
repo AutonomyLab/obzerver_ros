@@ -220,6 +220,7 @@ protected:
                                                  papp_ptr_->GetCTCstPtr()->GetTrackedFeaturesCurr(),
                                                  2,
                                                  CV_RGB(0,0,255), CV_RGB(255, 0, 0), CV_RGB(255, 0, 0));
+          papp_ptr_->GetRECstPtr()->DrawROIs(frame_debug_cvi_.image, true);
         }
         frame_debug_cvi_.header.frame_id = frame_input_cvptr_->header.frame_id;
         frame_debug_cvi_.header.stamp = frame_input_cvptr_->header.stamp;
