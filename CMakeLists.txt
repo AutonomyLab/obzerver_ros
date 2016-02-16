@@ -24,22 +24,25 @@ find_package(Boost 1.45 REQUIRED COMPONENTS program_options)
 find_package(OpenCV REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
 
 # TODO: Inherit obzerver libs and include_dirs
-include(ExternalProject)
-ExternalProject_Add(libobzerver
-  #GIT_REPOSITORY https://bitbucket.org/AutonomyLab/obzerver.git
-  GIT_REPOSITORY /home/autolab/Dev/obzerver
-  GIT_TAG opencv-3.0
-  PREFIX ${CATKIN_DEVEL_PREFIX}
-  CMAKE_ARGS
-    -DWITH_TESTS=0
-    -DCMAKE_PREFIX_PATH=${CUSTOM_OPENCV_DIR}
-    -DCMAKE_BUILD_TYPE=Release
-    -DEXTERNAL_DEVEL_SPACE=${CATKIN_DEVEL_PREFIX}
-    -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-#  BUILD_IN_SOURCE 1
-)
+#include(ExternalProject)
+#ExternalProject_Add(libobzerver
+#  #GIT_REPOSITORY https://bitbucket.org/AutonomyLab/obzerver.git
+#  GIT_REPOSITORY /home/autolab/Dev/obzerver
+#  GIT_TAG opencv-3.0
+#  PREFIX ${CATKIN_DEVEL_PREFIX}
+#  CMAKE_ARGS
+#    -DWITH_TESTS=0
+#    -DCMAKE_PREFIX_PATH=${CUSTOM_OPENCV_DIR}
+#    -DCMAKE_BUILD_TYPE=Release
+#    -DEXTERNAL_DEVEL_SPACE=${CATKIN_DEVEL_PREFIX}
+#    -DCMAKE_INSTALL_PREFIX=${CATKIN_DEVEL_PREFIX}
+#  BUILD_COMMAND make
+#  INSTALL_COMMAND make install
+##  BUILD_IN_SOURCE 1
+#)
+
+#set(OBZERVER_PATH ${CATKIN_DEVEL_PREFIX})
+set(OBZERVER_PATH "/home/autolab/Dev/obzerver/build/install")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -82,11 +85,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
-  ${CATKIN_DEVEL_PREFIX}/include
+  ${OBZERVER_PATH}/include
 )
 
 link_directories(
-  ${CATKIN_DEVEL_PREFIX}/lib
+  ${OBZERVER_PATH}/lib
 )
 
 ## Declare a cpp executable

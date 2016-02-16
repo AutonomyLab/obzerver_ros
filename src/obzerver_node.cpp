@@ -242,6 +242,7 @@ protected:
   void ImageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
     cache_msg_ = msg;
+    Process();
   }
 
   void EnableCallback(const std_msgs::BoolConstPtr& msg)
@@ -336,15 +337,16 @@ public:
   {
     // TODO(mani-monaj): Check if fixed freq. is better
     //    ROS_INFO("[OBR] Setting ROS Loop Rate to %f hz", param_fps_);
-    ros::Rate rate(30.0);
-    while (ros::ok())
-    {
-      spinOnce();
-      if (!rate.sleep())
-      {
-        ROS_WARN("[OBR] Can not catch up with input image rate.");
-      }
-    }
+//    ros::Rate rate(20.0);
+//    while (ros::ok())
+//    {
+//      spinOnce();
+//      if (!rate.sleep())
+//      {
+//        ROS_WARN("[OBR] Can not catch up with input image rate.");
+//      }
+//    }
+    ros::spin();
   }
 
   virtual void spinOnce()
@@ -359,9 +361,10 @@ int main(int argc, char* argv[])
   /* ROS Stuff */
   ros::init(argc, argv, "obzerver_ros");
   ros::NodeHandle ros_nh;
+  ros::NodeHandle ros_nh_priv("~");
   int param_queue_size;
 
-  ObzerverROS::GetParam<int>(ros_nh, "queue_size", param_queue_size, 1);
+  ObzerverROS::GetParam<int>(ros_nh_priv, "queue_size", param_queue_size, 1);
 
   try
   {
