@@ -21,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 find_package(Boost 1.45 REQUIRED COMPONENTS program_options)
 
-find_package(OpenCV REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
+find_package(OpenCV 3 REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
 
 # TODO: Inherit obzerver libs and include_dirs
 #include(ExternalProject)
