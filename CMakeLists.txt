@@ -42,6 +42,8 @@ find_package(OpenCV 3 REQUIRED PATHS ${CUSTOM_OPENCV_DIR} NO_DEFAULT_PATH)
 #)
 
 #set(OBZERVER_PATH ${CATKIN_DEVEL_PREFIX})
+# to compile obzerver for this mode:
+# mkdir ~/Dev/obzerver/build/install && cd ~/Dev/obzerver/build && cmake .. -DWITH_TESTS=0 -DCMAKE_PREFIX_PATH=/home/autolab/opencv/opencv-3.1.0/install -DEXTERNAL_DEVEL_SPACE=`pwd`/install -DCMAKE_INSTALL_PREFIX=`pwd`/install
 set(OBZERVER_PATH "/home/autolab/Dev/obzerver/build/install")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
