@@ -54,6 +54,7 @@ set(OBZERVER_PATH "/home/autolab/Dev/obzerver/build/install")
 ## Generate messages in the 'msg' folder
 add_message_files(
  FILES
+ Init.msg
  Track.msg
  Tracks.msg
 )

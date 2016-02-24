@@ -27,6 +27,7 @@
 
 #include "obzerver/periodicity_app.hpp"
 #include "obzerver_ros/Tracks.h"
+#include "obzerver_ros/Init.h"
 
 class ObzerverROS
 {
@@ -151,6 +152,7 @@ protected:
 
       LOG(INFO) << "Frame: " << frame_counter_ << " [" << frame_input_.cols << " x " << frame_input_.rows << "]";
 
+      //cv::rectangle(frame_input_, cv::Rect(0, 0, 640, 100), CV_RGB(0, 0, 0), -1);
       papp_ptr_->Update(frame_input_);
 
       all_tracks_msg_.header.stamp = ros::Time::now();
@@ -245,14 +247,15 @@ protected:
     Process();
   }
 
-  void EnableCallback(const std_msgs::BoolConstPtr& msg)
+  void EnableCallback(const obzerver_ros::InitConstPtr msg)
   {
-    const bool en = static_cast<bool>(msg->data);
+    const bool en = static_cast<bool>(msg->enable);
     ROS_WARN_STREAM("[OBR] Request to " << (en ? "Enable" : "Disable"));
 
     if (paused && en)
     {
-      ReinitObzerverApp();
+      ReinitObzerverApp(msg->min_roi.width, msg->min_roi.height,
+                        msg->max_roi.width, msg->max_roi.height);
     }
 
     if (!paused && !en)
@@ -263,11 +266,45 @@ protected:
     paused = !en;
   }
 
-  void ReinitObzerverApp()
+  void ReinitObzerverApp(const uint32_t roi_min_width,
+                         const uint32_t roi_min_height,
+                         const uint32_t roi_max_width,
+                         const uint32_t roi_max_height)
   {
-    ROS_WARN("[OBR] Reinitializing obzerver ...");
-    boost::program_options::variables_map vm;
+    ROS_WARN_STREAM("[OBR] Reinitializing obzerver; Min Size (w,h) " << roi_min_width << " , " << roi_min_height
+             << " Max Size (w,h) " << roi_max_width << " , " << roi_max_height);
+
+    boost::program_options::options_description po_cmdline_options;
     papp_ptr_ = std::make_shared<obz::app::PeriodicityApp>();
+
+    po_cmdline_options.add(papp_ptr_->GetOptionsDescription());
+    boost::program_options::variables_map vm;
+
+    // This is hacky, but that's because I could not find a sane way to fill vm manually
+    std::vector<std::string> fake_cmdline;
+    fake_cmdline.push_back("dummy");
+    fake_cmdline.push_back("--roi.min_height");
+    fake_cmdline.push_back(boost::lexical_cast<std::string>(roi_min_height));
+    fake_cmdline.push_back("--roi.min_width");
+    fake_cmdline.push_back(boost::lexical_cast<std::string>(roi_min_width));
+    fake_cmdline.push_back("--roi.max_height");
+    fake_cmdline.push_back(boost::lexical_cast<std::string>(roi_max_height));
+    fake_cmdline.push_back("--roi.max_width");
+    fake_cmdline.push_back(boost::lexical_cast<std::string>(roi_max_width));
+
+    std::vector<char *> argv(fake_cmdline.size() + 1);    // one extra for the null
+
+    for (std::size_t i = 0; i < fake_cmdline.size(); ++i)
+    {
+        argv[i] = &fake_cmdline[i][0];
+    }
+
+    execvp(argv[0], argv.data());
+
+    ROS_INFO_STREAM("argv size: " << argv.size());
+    boost::program_options::store(boost::program_options::parse_command_line(argv.size() - 1, argv.data(), po_cmdline_options), vm);
+    boost::program_options::notify(vm);
+
     if (!papp_ptr_->Init(param_cfg_file_, param_log_file_, false, std::string(""), vm))
     {
       throw std::runtime_error("Error initializing obz::PeriodicityApp");
@@ -288,7 +325,7 @@ public:
 
     if (!paused)
     {
-      ReinitObzerverApp();
+      ReinitObzerverApp(5, 10, 100, 200);
     }
     else
     {
